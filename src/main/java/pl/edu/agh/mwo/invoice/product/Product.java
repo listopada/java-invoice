@@ -11,13 +11,11 @@ public abstract class Product {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
-
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Price must be greater than zero");
         }
-
-        if (taxPercent == null) {
-            throw new IllegalArgumentException("Tax percent cannot be null");
+        if (taxPercent == null || taxPercent.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Tax percent cannot be null or negative");
         }
 
         this.name = name;
@@ -39,8 +37,5 @@ public abstract class Product {
 
     public BigDecimal getPriceWithTax() {
         return this.price.multiply(this.taxPercent).add(this.price);
-    }
-
-    public BigDecimal getTaxRate() {
     }
 }
