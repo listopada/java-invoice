@@ -3,11 +3,26 @@ package pl.edu.agh.mwo.invoice;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import pl.edu.agh.mwo.invoice.product.Product;
 
 public class Invoice {
-    private Map<Product, Integer> products = new HashMap<Product, Integer>();
+    private final Map<Product, Integer> products = new HashMap<>();
+    private static final AtomicInteger invoiceCounter = new AtomicInteger(1);
+    private final String invoiceNumber;
+
+    public Invoice() {
+        this.invoiceNumber = generateInvoiceNumber();
+    }
+
+    private String generateInvoiceNumber() {
+        return "FV-" + invoiceCounter.getAndIncrement();
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
 
     public void addProduct(Product product) {
         addProduct(product, 1);
@@ -17,28 +32,54 @@ public class Invoice {
         if (product == null || quantity <= 0) {
             throw new IllegalArgumentException();
         }
-        products.put(product, quantity);
+        products.merge(product, quantity, Integer::sum);
     }
 
     public BigDecimal getNetTotal() {
         BigDecimal totalNet = BigDecimal.ZERO;
-        for (Product product : products.keySet()) {
-            BigDecimal quantity = new BigDecimal(products.get(product));
-            totalNet = totalNet.add(product.getPrice().multiply(quantity));
+        for (Map.Entry<Product, Integer> entry : products.entrySet()) {
+            BigDecimal quantity = BigDecimal.valueOf(entry.getValue());
+            BigDecimal productNet = entry.getKey().getPrice().multiply(quantity);
+            totalNet = totalNet.add(productNet);
         }
-        return totalNet;
+        return totalNet.setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
     }
 
     public BigDecimal getTaxTotal() {
-        return getGrossTotal().subtract(getNetTotal());
+        BigDecimal totalNet = getNetTotal();
+        BigDecimal totalGross = getGrossTotal();
+        return totalGross.subtract(totalNet).setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
     }
 
     public BigDecimal getGrossTotal() {
         BigDecimal totalGross = BigDecimal.ZERO;
-        for (Product product : products.keySet()) {
-            BigDecimal quantity = new BigDecimal(products.get(product));
-            totalGross = totalGross.add(product.getPriceWithTax().multiply(quantity));
+        for (Map.Entry<Product, Integer> entry : products.entrySet()) {
+            BigDecimal quantity = BigDecimal.valueOf(entry.getValue());
+            BigDecimal productGross = entry.getKey().getPriceWithTax().multiply(quantity);
+            totalGross = totalGross.add(productGross);
         }
-        return totalGross;
+        return totalGross.setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
+    }
+
+    public static void resetInvoiceCounter() {
+        invoiceCounter.set(1);
+    }
+
+    public String getInvoiceDetails() {
+        StringBuilder invoiceDetails = new StringBuilder();
+        invoiceDetails.append("Numer faktury: ").append(invoiceNumber).append("\n");
+
+        for (Map.Entry<Product, Integer> entry : products.entrySet()) {
+            Product product = entry.getKey();
+            Integer quantity = entry.getValue();
+            invoiceDetails.append(product.getName())
+                    .append(" | Liczba sztuk: ").append(quantity)
+                    .append(" | Cena: ").append(product.getPrice())
+                    .append("\n");
+        }
+
+        invoiceDetails.append("Liczba pozycji: ").append(products.size()).append("\n");
+
+        return invoiceDetails.toString();
     }
 }
