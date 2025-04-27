@@ -7,11 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import pl.edu.agh.mwo.invoice.Invoice;
-import pl.edu.agh.mwo.invoice.product.DairyProduct;
-import pl.edu.agh.mwo.invoice.product.OtherProduct;
-import pl.edu.agh.mwo.invoice.product.Product;
-import pl.edu.agh.mwo.invoice.product.TaxFreeProduct;
+import pl.edu.agh.mwo.invoice.product.*;
 
 public class InvoiceTest {
     private Invoice invoice;
@@ -125,4 +121,69 @@ public class InvoiceTest {
     public void testAddingNullProduct() {
         invoice.addProduct(null);
     }
+
+    @Test
+    public void testInvoiceNumberIsGeneratedCorrectly() {
+        Invoice.resetInvoiceCounter();
+        Invoice invoice1 = new Invoice();
+        Invoice invoice2 = new Invoice();
+        Assert.assertEquals("FV-1", invoice1.getInvoiceNumber());
+        Assert.assertEquals("FV-2", invoice2.getInvoiceNumber());
+    }
+
+    @Test
+    public void testInvoiceCounterResetsProperly() {
+        Invoice.resetInvoiceCounter();
+        Invoice invoice1 = new Invoice();
+        Assert.assertEquals("FV-1", invoice1.getInvoiceNumber());
+
+        Invoice.resetInvoiceCounter();
+        Invoice invoice2 = new Invoice();
+        Assert.assertEquals("FV-1", invoice2.getInvoiceNumber());
+    }
+
+    @Test
+    public void testInvoiceDetailsContent() {
+        Product apple = new TaxFreeProduct("Jablko", new BigDecimal("2.50"));
+        Product milk = new DairyProduct("Mleko", new BigDecimal("3.00"));
+
+        invoice.addProduct(apple, 2); // 2 x 2.50
+        invoice.addProduct(milk, 1);  // 1 x 3.00
+
+        String details = invoice.getInvoiceDetails();
+
+        Assert.assertTrue(details.contains("Jablko"));
+        Assert.assertTrue(details.contains("Mleko"));
+        Assert.assertTrue(details.contains("Liczba sztuk: 2"));
+        Assert.assertTrue(details.contains("Liczba sztuk: 1"));
+        Assert.assertTrue(details.contains("Liczba pozycji: 2"));
+        Assert.assertTrue(details.contains(invoice.getInvoiceNumber()));
+    }
+
+    @Test
+    public void testAddingSameProductTwiceSumsTheQuantities() {
+        Product cheese = new DairyProduct("Ser", new BigDecimal("10"));
+
+        invoice.addProduct(cheese, 2);
+        invoice.addProduct(cheese, 3);
+
+        Assert.assertThat(new BigDecimal("50.00"), Matchers.comparesEqualTo(invoice.getNetTotal()));
+        Assert.assertTrue(invoice.getInvoiceDetails().contains("Liczba sztuk: 5"));
+        Assert.assertTrue(invoice.getInvoiceDetails().contains("Ser"));
+        Assert.assertTrue(invoice.getInvoiceDetails().contains("Liczba pozycji: 1"));
+    }
+
+    @Test
+    public void testExciseProductsIncludeExtraTax() {
+        Product wine = new BottleOfWine("Czerwone wino", new BigDecimal("100"));
+        Product fuel = new FuelCanister("Kanister paliwa", new BigDecimal("50"));
+
+        invoice.addProduct(wine);
+        invoice.addProduct(fuel);
+
+        Assert.assertThat(new BigDecimal("150"), Matchers.comparesEqualTo(invoice.getNetTotal()));
+        Assert.assertThat(new BigDecimal("45.62"), Matchers.comparesEqualTo(invoice.getTaxTotal()));
+        Assert.assertThat(new BigDecimal("195.62"), Matchers.comparesEqualTo(invoice.getGrossTotal()));
+    }
+
 }

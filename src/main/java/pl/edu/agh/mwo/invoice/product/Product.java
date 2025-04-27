@@ -4,20 +4,16 @@ import java.math.BigDecimal;
 
 public abstract class Product {
     private final String name;
-
     private final BigDecimal price;
-
     private final BigDecimal taxPercent;
 
-    protected Product(String name, BigDecimal price, BigDecimal tax) {
-        if (name == null || name.equals("")
-                || price == null || tax == null || tax.compareTo(new BigDecimal(0)) < 0
-                || price.compareTo(new BigDecimal(0)) < 0) {
+    protected Product(String name, BigDecimal price, BigDecimal taxPercent) {
+        if (name == null || name.isEmpty() || price == null || taxPercent == null || taxPercent.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException();
         }
         this.name = name;
         this.price = price;
-        this.taxPercent = tax;
+        this.taxPercent = taxPercent;
     }
 
     public String getName() {
@@ -33,6 +29,6 @@ public abstract class Product {
     }
 
     public BigDecimal getPriceWithTax() {
-        return price.multiply(taxPercent).add(price);
+        return price.multiply(BigDecimal.ONE.add(taxPercent));
     }
 }

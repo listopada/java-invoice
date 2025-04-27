@@ -42,13 +42,13 @@ public class Invoice {
             BigDecimal productNet = entry.getKey().getPrice().multiply(quantity);
             totalNet = totalNet.add(productNet);
         }
-        return totalNet.setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
+        return totalNet.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
     public BigDecimal getTaxTotal() {
         BigDecimal totalNet = getNetTotal();
         BigDecimal totalGross = getGrossTotal();
-        return totalGross.subtract(totalNet).setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
+        return totalGross.subtract(totalNet).setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
     public BigDecimal getGrossTotal() {
@@ -58,7 +58,7 @@ public class Invoice {
             BigDecimal productGross = entry.getKey().getPriceWithTax().multiply(quantity);
             totalGross = totalGross.add(productGross);
         }
-        return totalGross.setScale(2, BigDecimal.ROUND_HALF_EVEN);  // Zaokrąglamy wynik
+        return totalGross.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
     public static void resetInvoiceCounter() {
