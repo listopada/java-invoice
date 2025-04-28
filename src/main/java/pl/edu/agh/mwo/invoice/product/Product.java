@@ -8,7 +8,12 @@ public abstract class Product {
     private final BigDecimal taxPercent;
 
     protected Product(String name, BigDecimal price, BigDecimal taxPercent) {
-        if (name == null || name.isEmpty() || price == null || taxPercent == null || taxPercent.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.ZERO) < 0) {
+        if (name == null
+                || name.isEmpty()
+                || price == null
+                || taxPercent == null
+                || taxPercent.compareTo(BigDecimal.ZERO) < 0
+                || price.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException();
         }
         this.name = name;
